@@ -9,6 +9,7 @@
     "filename" : "file.html", // the file on disk
     "title" : "My Page title" // the page's title
 }
+```
 
 - An html file (with optional mustache templating)
 - A template file to construct the mustache template object
