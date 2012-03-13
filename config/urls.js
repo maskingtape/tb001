@@ -1,17 +1,18 @@
 var urls = {
     "A001" : {
         "url" : "/",
-        "pathname" : "/copy/index.html",
+        "filename" : "index.html",
         "title" : "Home"
     },
     "S001" : {
         "url" : "/list",
-        "pathname" : "/copy/list.html",
-        "title" : "A list page"
+        "filename" : "list.html",
+        "title" : "A list page",
+        "template" : "S001"
     },
     "R404" : {
         "url" : "/404",
-        "pathname" : "/copy/R404-404.html",
+        "filename" : "R404-404.html",
         "title" : "Item not found"
     }
 };

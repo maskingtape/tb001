@@ -1,17 +1,10 @@
 // INCLUDES
 var fs = require('fs'),
-    mustache = require('./mustache');
+    mustache = require('./lib/mustache'),
+    globals = require('./config/config').globals,
+    utils = require('./lib/utils').utils;
 
-// TODO create a get service to return this as json via HTTP    
-var lists = [];
-    lists.push(require('./copy/L001-list').L001);
-    lists.push(require('./copy/L002-another-list').L002);
-    
 
-    
-// GLOBALS
-var ENCODING = 'utf-8';
-    
 // fetch the text constants into memory on load // Is this really on load?
 var headerHTML = "",
     footerHTML = "";
@@ -42,34 +35,46 @@ var view = (function() {
     
         writeResponse : function writeResponse(response, responseType, mimeType, url){
             
-            response.writeHead(responseType, {"Content-Type": "text/" + mimeType});
             
-            var filename = __dirname + url.pathname,
-                readStream = fs.createReadStream(filename, { 'encoding' : ENCODING }),
+            
+            response.writeHead(responseType, {"Content-Type": mimeType});
+            
+            var filename = __dirname + globals.HTML_PATH + '/' + url.filename,
+                readStream = fs.createReadStream(filename, { 'encoding' : globals.ENCODING }),
                 outputContents = "";
-                
-            // Construct Mustache view object
-            var templateView = {
-                title : url.title,
-                lists : lists //  object lit. declared globally // TO DO - globally?
-            }
             
             readStream.on('open', function () {
-                 // pipe the read stream to the response object (which goes to the client)
-               // readStream.pipe(response);
+                // pipe the read stream to the response object (which goes to the client)
+                // readStream.pipe(response);
             });
             
-            // Append the file contents to a variable TO DO add to stream
+            // Append the page contents to a variable // TODO add to stream
             readStream.on('data', function(data) {
             
-                // Process and Add the header                
-                outputContents = mustache.to_html(headerHTML, templateView) + data;
                 
-                console.log("templateView")
-                console.log(templateView)
+                // generic template obj for mustache to use
+                var template = {}; 
+                // add defaults // TODO decouple from this page (add to some kind of config)
+                template.title = url.title; // from request for this page
+                
+                    
+                if(url.template){ // TODO - remove this - every page will have a template file
+                    // get the template for this page url
+                    var pageTemplate = require("." + globals.TEMPLATE_PATH + '/' + url.template).pageTemplate;
+                    // merge it into the generic template
+                    template  = utils.mergeRecursive(template, pageTemplate);  
+                }
+                
+                
+                
+                // Process and Add the header                
+                outputContents = mustache.to_html(headerHTML, template) + data;
+                
+                console.log("template")
+                console.log(template)
                 
                 // Mustache any content in body
-                outputContents = mustache.render(outputContents, templateView);
+                outputContents = mustache.render(outputContents, template);
                 
                 // Add the footer
                 outputContents += footerHTML;
