@@ -6,19 +6,21 @@ var fs = require('fs'),
 
 
 // fetch the text constants into memory on load // Is this really on load?
-var headerHTML = "",
-    footerHTML = "";
-   
-// TODO create model
+var headerHTML, footerHTML;
+
+// TODO fetch these via a service
+// create the json(s) for the nav items, etc
+// create the urls.js entries
+//utils.fetchLocalHttp(callback, path);
         
-fs.readFile(__dirname+"/header.html", function (err, data) {
+fs.readFile(__dirname+globals.HTML_PATH+"/header.html", function (err, data) {
   if(err){
     throw err;
   }
   headerHTML = data.toString(); 
 });
 
-fs.readFile(__dirname+"/footer.html", function (err, data) {
+fs.readFile(__dirname+globals.HTML_PATH+"/footer.html", function (err, data) {
   if(err){
     throw err;
   }
@@ -32,41 +34,51 @@ fs.readFile(__dirname+"/footer.html", function (err, data) {
 var view = (function() {
     
     return {
-    
-        writeResponse : function writeResponse(response, responseType, mimeType, url){
-            
-            
+        /**
+        * @param template {object}
+        */
+        writeResponse : function writeResponse(response, responseType, mimeType, url, template){
+            var api = mimeType === "application/json" ? true: false;
             
             response.writeHead(responseType, {"Content-Type": mimeType});
             
+            if(api){
+                view.writeJsonStream(response, template);
+            }else{
+                view.writeHtmlStream(response, url, template);
+            }
+        },
+        
+        writeJsonStream : function writeJsonStream(response, template){
+            response.write( JSON.stringify(template) );
+            response.end('\n');
+        },
+        
+        /**
+        * @param jsonTemplate {object} 
+        */
+        writeHtmlStream : function writeHtmlStream(response, url, jsonTemplate){
+        
             var filename = __dirname + globals.HTML_PATH + '/' + url.filename,
                 readStream = fs.createReadStream(filename, { 'encoding' : globals.ENCODING }),
                 outputContents = "";
-            
-            readStream.on('open', function () {
-                // pipe the read stream to the response object (which goes to the client)
-                // readStream.pipe(response);
-            });
+
             
             // Append the page contents to a variable // TODO add to stream
             readStream.on('data', function(data) {
-            
                 
                 // generic template obj for mustache to use
                 var template = {}; 
-                // add defaults // TODO decouple from this page (add to some kind of config)
+                
+                // TODO decouple from this page (move from urls.js to each page's template file)
                 template.title = url.title; // from request for this page
-                
                     
-                if(url.template){ // TODO - remove this - every page will have a template file
-                    // get the template for this page url
-                    var pageTemplate = require("." + globals.TEMPLATE_PATH + '/' + url.template).pageTemplate;
+                if(jsonTemplate){ 
+                    
                     // merge it into the generic template
-                    template  = utils.mergeRecursive(template, pageTemplate);  
+                    template  = utils.mergeRecursive(template, jsonTemplate);  //  TODO no need for the merge in the case there's no default template params
                 }
-                
-                
-                
+                   
                 // Process and Add the header                
                 outputContents = mustache.to_html(headerHTML, template) + data;
                 
@@ -81,11 +93,9 @@ var view = (function() {
                 
                 response.write(outputContents);
                 
+                
             });
             
-            readStream.on('close', function () {
-               
-            });
             
             readStream.on('end', function() {
                 response.end();

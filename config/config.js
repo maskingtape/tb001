@@ -1,5 +1,7 @@
 // GLOBALS
 var globals = {
+    PORT : '8080',
+    HOST : 'localhost',
     ENCODING : 'utf-8',
     REST_PATH : '/api',
     TEMPLATE_PATH : '/copy/json',

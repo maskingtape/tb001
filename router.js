@@ -20,56 +20,73 @@ var router = (function(){
             }
             
         },
-
+        
+        /** 
+        *  For any path that exists, fetch the api/ version as json
+        *  send to be written to stream within View.
+        *  (if the path doesn't start with api , write mustached file template for 
+        *  /path/to using json to stream else write json)
+        */
+        
         routeContent : function routeContent(urls, pathname, response){
             
             var found = false,
                 mimeType = 'text/html',
-                api = pathname.indexOf(globals.REST_PATH) === 0 ? true : false; // is this an api request? set flag to true...
+                path,                   // the 'canonical' version of the url
+                template = null;               // the json template for the page
+                
+            // sanitise path
+            path = pathname === '/' ? pathname : utils.stripTrailingSlash(pathname);  // except home page
             
-            if(api){ 
+            var api = path.indexOf(globals.REST_PATH) === 0 ? true : false;
                 
-                // ...and standardise the path
-                pathname = pathname.substring(globals.REST_PATH.length, pathname.length);
-                
-                /* TODO set model for this reqest with 
-                    restObj = {
-                        verb : 'GET',
-                        params : {
-                            ...etc
-                        }   
-                        ... etc
-                    }
-                */
-                
+            console.log("path")
+            console.log(path)
+            console.log("api")
+            console.log(api)
+            
+            // is this an api request? 
+            if(api){
+               
+               path = path.substring(globals.REST_PATH.length, path.length); // match standard path for lookup
+               
             }
             
-            pathname = pathname === '/' ? pathname : utils.stripTrailingSlash(pathname);
-            
+            console.log("path")
+            console.log(path)
         
             // Using the lookup object, route based on the url mapped to this request
             for (var i in urls) {
             
-                if (urls[i].url === pathname) {
+                if (urls[i].url === path) {
                 
+                    var url = urls[i];  
                     
-                    // switch here based on url path. (html or json)
-                    if(api){
-                       
-                       // render json 
-                       mimeType = 'application/json';
+                    console.log("fetching data for " + path);
+                    
+                    if("template" in url){
+                        
+                        console.log("url.template")
+                        // fetch json from flat file for this path
+                        template = require("." + globals.TEMPLATE_PATH + '/' + url.template).pageTemplate;
+                    }else{
+                        console.log("no url.template")
+                        var noTemplate = true;
+                    }
                       
+                    if(api){
+                        if(noTemplate){ // 404
+                            break; 
+                        }else{
+                            mimeType = 'application/json';
+                        } 
                     }
                     
-                    // get the data
-                        // .. do http request
-                        // pass json in to write response
-                    
                     // fetch the content for the file and write it out
-                    view.writeResponse(response, 200, mimeType, urls[i]);
+                    view.writeResponse(response, 200, mimeType, urls[i], template);
                     
                     found = true;
-                    return; 
+                    break; 
                     
                 }
             }
@@ -77,8 +94,10 @@ var router = (function(){
             if(!found) {
                 
                 console.log("No request handler found for " + pathname);
-                view.writeResponse(response, 404, mimeType, utils.getPage(urls, globals.PAGE_404_ID));
+                view.writeResponse(response, 404, mimeType, urls[globals.PAGE_404_ID]);
+                
             }
+            
         },
         
         // TODO 

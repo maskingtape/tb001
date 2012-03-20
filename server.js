@@ -1,4 +1,5 @@
 var http = require('http'),
+    globals = require('./config/config').globals,
     url = require('url');
  
 function start(route, urls){
@@ -15,9 +16,9 @@ function start(route, urls){
         
     }
     
-    http.createServer(onRequest).listen(8080);
+    http.createServer(onRequest).listen(globals.PORT);
      
-    console.log('Server running at http://127.0.0.1:8080/');
+    console.log('Server running at http://127.0.0.1:' + globals.PORT);
 }
 
 exports.start = start;
