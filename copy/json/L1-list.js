@@ -1,5 +1,5 @@
-var another_list = {
-    "title" : "Another list",
+var list = {
+    "title" : "A list",
     "group" : [
         { "item" : "First one" },
         { "item" : "Second one" },
@@ -7,11 +7,4 @@ var another_list = {
     ]
 }
 
-exports.L002 = another_list;
-
-
-
-
-
-
-
+exports.list = list;

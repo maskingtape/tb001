@@ -59,9 +59,8 @@ var view = (function() {
         */
         writeHtmlStream : function writeHtmlStream(response, url, jsonTemplate){
         
-            var filename = __dirname + globals.HTML_PATH + '/' + url.filename,
-                readStream = fs.createReadStream(filename, { 'encoding' : globals.ENCODING }),
-                outputContents = "";
+            var filename = __dirname + globals.HTML_PATH + '/' + url.filename + globals.HTML_EXTN,
+                readStream = fs.createReadStream(filename, { 'encoding' : globals.ENCODING });
 
             
             // Append the page contents to a variable // TODO add to stream
@@ -70,28 +69,29 @@ var view = (function() {
                 // generic template obj for mustache to use
                 var template = {}; 
                 
-                // TODO decouple from this page (move from urls.js to each page's template file)
-                template.title = url.title; // from request for this page
-                    
+                if("title" in url){
+                    template.title = url.title; // from request for this page
+                }   
+                
                 if(jsonTemplate){ 
                     
                     // merge it into the generic template
                     template  = utils.mergeRecursive(template, jsonTemplate);  //  TODO no need for the merge in the case there's no default template params
                 }
                    
-                // Process and Add the header                
-                outputContents = mustache.to_html(headerHTML, template) + data;
-                
                 console.log("template")
                 console.log(template)
                 
+                // Process and Add the header
+                response.write(mustache.to_html(headerHTML, template)); //fire custom event
+                console.log("header written");
+                
                 // Mustache any content in body
-                outputContents = mustache.render(outputContents, template);
+                response.write(mustache.render(data, template));
+                console.log("body written");
                 
-                // Add the footer
-                outputContents += footerHTML;
-                
-                response.write(outputContents);
+                response.write(footerHTML);
+                console.log("footer written");
                 
                 
             });
@@ -106,6 +106,27 @@ var view = (function() {
             });
             
             
+        }, 
+        
+        writeMedia : function writeMedia(response, responseType, mimeType, pathname){
+            var dataType = mimeType.indexOf('text') === 0 ? 'utf8':'binary';
+            
+            fs.readFile(__dirname+globals.MEDIA_PATH+pathname, function (err, data) {
+                if(err){
+                    console.log(err);
+                    response.writeHead(404, {"Content-Type": 'utf8'});
+                    response.end();
+                }else{
+                    // TODO gzip and so on
+                    if(dataType === "utf8"){
+                        data = data.toString();
+                    }
+                    response.writeHead(responseType, {"Content-Type": mimeType});
+                    response.end(data, dataType);
+                }
+                console.log("done: " + pathname)
+            });
+                
         }
     };
 })();

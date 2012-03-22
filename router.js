@@ -9,16 +9,24 @@ var router = (function(){
     return {
     
         route : function route(urls, pathname, response) {
-           
+        
+            var mediaType;
             console.log("About to route a request for " + pathname);
             
             // Filter out static media
-            if(router.isMedia(pathname)){
+            if(mediaType = router.isMedia(pathname)){
                 // serve media
+                console.log("Routing media file");
+                router.routeMedia(pathname, response, mediaType);
             }else{
                 router.routeContent(urls, pathname, response);
             }
             
+        },
+        
+        routeMedia : function routeMedia(pathname, response, mediaType){
+            // TODO caching, 304s..replacement with express.js..
+            view.writeMedia(response, 200, mediaType.mimeType, pathname);
         },
         
         /** 
@@ -38,22 +46,12 @@ var router = (function(){
             // sanitise path
             path = pathname === '/' ? pathname : utils.stripTrailingSlash(pathname);  // except home page
             
-            var api = path.indexOf(globals.REST_PATH) === 0 ? true : false;
-                
-            console.log("path")
-            console.log(path)
-            console.log("api")
-            console.log(api)
-            
             // is this an api request? 
-            if(api){
-               
-               path = path.substring(globals.REST_PATH.length, path.length); // match standard path for lookup
-               
-            }
+            var api = path.indexOf(globals.REST_PATH) === 0 ? true : false;
             
-            console.log("path")
-            console.log(path)
+            if(api){ // get 'canonical' pathname
+                path = path.substring(globals.REST_PATH.length, path.length); 
+            }
         
             // Using the lookup object, route based on the url mapped to this request
             for (var i in urls) {
@@ -64,21 +62,20 @@ var router = (function(){
                     
                     console.log("fetching data for " + path);
                     
-                    if("template" in url){
-                        
-                        console.log("url.template")
-                        // fetch json from flat file for this path
-                        template = require("." + globals.TEMPLATE_PATH + '/' + url.template).pageTemplate;
-                    }else{
-                        console.log("no url.template")
-                        var noTemplate = true;
+                    // fetch json from flat file for this path 
+                    try {
+                        template = require("." + globals.TEMPLATE_PATH + '/' + url.filename).pageTemplate;
+                    }catch(e){
+                        console.log("Note: " + e);
+                        console.log("Using default template");
+                        template = null;
                     }
-                      
+                    
                     if(api){
-                        if(noTemplate){ // 404
-                            break; 
-                        }else{
+                        if(template){ 
                             mimeType = 'application/json';
+                        }else{ // 404
+                            break; 
                         } 
                     }
                     
@@ -103,7 +100,16 @@ var router = (function(){
         // TODO 
         isMedia : function isMedia(pathname){
             supportedMedia = globals.SUPPORTED_MEDIA;
-            var isMedia = false;
+            var isMedia = false,
+                suffix = pathname.substring(pathname.lastIndexOf('.') + 1, pathname.length);
+                
+            
+            for (var item in supportedMedia){
+                if(supportedMedia[item].type === suffix){
+                    var isMedia = supportedMedia[item];
+                }
+            }
+            
             return isMedia;
         }
         

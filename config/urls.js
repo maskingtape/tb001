@@ -1,18 +1,27 @@
 var urls = {
     "A001" : {
         "url" : "/",
-        "filename" : "index.html",
+        "filename" : "index",
         "title" : "Home"
     },
-    "S001" : {
+    "O1" : {
+        "url" : "/lists",
+        "filename" : "lists",
+        "title" : "A list page"
+    },
+    "L1" : {
         "url" : "/list",
-        "filename" : "list.html",
-        "title" : "A list page",
-        "template" : "S001"
+        "filename" : "L1-list",
+        "title" : "A list page"
+    },
+    "L2" : {
+        "url" : "/another-list",
+        "filename" : "L2-another-list",
+        "title" : "A list page"
     },
     "R404" : {
         "url" : "/404",
-        "filename" : "R404-404.html",
+        "filename" : "R404-404",
         "title" : "Item not found"
     }
 };
