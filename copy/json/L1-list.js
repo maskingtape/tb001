@@ -8,3 +8,4 @@ var list = {
 }
 
 exports.list = list;
+exports.pageTemplate = list; // property 'pageTemplate' is required to render an api page

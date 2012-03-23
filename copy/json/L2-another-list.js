@@ -8,6 +8,7 @@ var another_list = {
 }
 
 exports.list = another_list;
+exports.pageTemplate = another_list; // property 'pageTemplate' is required to render an api page 
 
 
 

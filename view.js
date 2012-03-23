@@ -1,5 +1,6 @@
 // INCLUDES
 var fs = require('fs'),
+    path = require('path'),
     mustache = require('./lib/mustache'),
     globals = require('./config/config').globals,
     utils = require('./lib/utils').utils;
@@ -11,7 +12,7 @@ var headerHTML, footerHTML;
 // TODO fetch these via a service
 // create the json(s) for the nav items, etc
 // create the urls.js entries
-//utils.fetchLocalHttp(callback, path);
+//utils.fetchLocalHttp(path, callback);
         
 fs.readFile(__dirname+globals.HTML_PATH+"/header.html", function (err, data) {
   if(err){
@@ -58,53 +59,58 @@ var view = (function() {
         * @param jsonTemplate {object} 
         */
         writeHtmlStream : function writeHtmlStream(response, url, jsonTemplate){
-        
-            var filename = __dirname + globals.HTML_PATH + '/' + url.filename + globals.HTML_EXTN,
-                readStream = fs.createReadStream(filename, { 'encoding' : globals.ENCODING });
-
             
-            // Append the page contents to a variable // TODO add to stream
-            readStream.on('data', function(data) {
-                
-                // generic template obj for mustache to use
-                var template = {}; 
-                
-                if("title" in url){
-                    template.title = url.title; // from request for this page
-                }   
-                
-                if(jsonTemplate){ 
+            var filename = url.template? url.template : url.filename; // if there's a template use that
+            var filepath = __dirname + globals.HTML_PATH + '/' + filename + globals.HTML_EXTN;
+            
+            path.exists(filepath, function(exists){
+                if(exists){
+                    var readStream = fs.createReadStream(filepath, { 'encoding' : globals.ENCODING });
                     
-                    // merge it into the generic template
-                    template  = utils.mergeRecursive(template, jsonTemplate);  //  TODO no need for the merge in the case there's no default template params
-                }
-                   
-                console.log("template")
-                console.log(template)
-                
-                // Process and Add the header
-                response.write(mustache.to_html(headerHTML, template)); //fire custom event
-                console.log("header written");
-                
-                // Mustache any content in body
-                response.write(mustache.render(data, template));
-                console.log("body written");
-                
-                response.write(footerHTML);
-                console.log("footer written");
-                
-                
-            });
-            
-            
-            readStream.on('end', function() {
-                response.end();
-            });
+                    // Append the page contents to a variable // TODO add to stream
+                    readStream.on('data', function(data) {
+                    
+                        // generic template obj for mustache to use
+                        var template = {}; 
+                        
+                        if("title" in url){
+                            template.title = url.title; // from request for this page
+                        }   
+                        
+                        if(jsonTemplate){ 
+                            
+                            // merge it into the generic template
+                            template  = utils.mergeRecursive(template, jsonTemplate);  //  TODO no need for the merge in the case there's no default template params
+                        }
+                           
+                        // console.log("template: ")
+                        // console.log(template)
+                        
+                        // Process and Add the header
+                        response.write(mustache.to_html(headerHTML, template)); //fire custom event
+                        
+                        // Mustache any content in body
+                        response.write(mustache.render(data, template));
+                        
+                        response.write(footerHTML);
+                    
+                    
+                    });
+                    
+                    
+                    readStream.on('end', function() {
+                        response.end();
+                    });
 
-            readStream.on('error', function(err) {
-                response.end(err);
+                    readStream.on('error', function(err) {
+                        response.end(err);
+                    });
+                    
+                }else{
+			// TODO return a proper 404 status
+                    response.end();
+                }    
             });
-            
             
         }, 
         

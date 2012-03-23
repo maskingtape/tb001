@@ -17,4 +17,4 @@ Every page has:
 
 Media is served, can be configured in config/config.js
 
-The json file can be accessed directly via e.g. /api/path/to
+The json file can be accessed via e.g. /api/path/to

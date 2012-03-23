@@ -6,18 +6,20 @@ var urls = {
     },
     "O1" : {
         "url" : "/lists",
-        "filename" : "lists",
+        "filename" : "O1-lists",
         "title" : "A list page"
     },
     "L1" : {
-        "url" : "/list",
+        "url" : "/lists/list",
         "filename" : "L1-list",
-        "title" : "A list page"
+        "title" : "A list page",
+        "template" : "lists"
     },
     "L2" : {
-        "url" : "/another-list",
+        "url" : "/lists/another-list",
         "filename" : "L2-another-list",
-        "title" : "A list page"
+        "title" : "A list page",
+        "template" : "lists"
     },
     "R404" : {
         "url" : "/404",
